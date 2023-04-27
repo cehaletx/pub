@@ -1,5 +1,12 @@
 #!/usr/bin/python3
 #--------------------------------------------------------------------------------
+#  This is the  Version 2 of get-late-N-days, which will now look specifically
+# at 3 particular index patterns rather than the whole cluster.
+# The benefit of looking at these specifics, logs-*, metrics-*, and apm-* is they
+# are the bulk of the data coming in for and observability cluster.
+#
+# will keep the old calculation for comparison.
+#
 # This script has a function defined to connect to elasticsearch and get cluster
 # stats, to find total docs, and total size, then calculate an average doc size.
 # Once we have an average doc size, it finds how many docs on each of the last N
@@ -18,7 +25,9 @@ warnings.filterwarnings("ignore")
 # not doing any checking but let's get the command line arg. expecting an
 # integer which is number of days of ingest to calculate
 #--------------------------------------------------------------------------------
-last_n_days = int( sys.argv[1] )
+#last_n_days = int( sys.argv[1] )
+last_n_days = int (3)
+#index_patterns=["logs-*","metrics-*","apm-*"]
 #--------------------------------------------------------------------------------
 # direct connect to elasticsearch host, can be a list
 #--------------------------------------------------------------------------------
@@ -36,6 +45,8 @@ last_n_days = int( sys.argv[1] )
 # if you want to connect to cloud...
 #--------------------------------------------------------------------------------
 es = Elasticsearch(
+#    cloud_id="",
+#    basic_auth=("elastic", "")
     cloud_id="",
     basic_auth=("elastic", "")
 )
@@ -44,20 +55,28 @@ class doubleQuoteDict(dict):
     return json.dumps(self)
   def __repr__(self):
     return json.dumps(self)
-# OK, let's get the cluster stats, for the total docs and total to calculate the average doc size.
-resp = es.cluster.stats()
-total_docs = int( resp[ "indices" ][ "docs" ][ "count" ])
-print ( "total docs = " + str( total_docs ) )
-total_data_set_size_in_bytes = int(resp[ "indices" ][ "store" ][ "total_data_set_size_in_bytes" ])
-print ( "total_data_set_in_bytes = " + str( total_data_set_size_in_bytes ) )
-avg_size = resp[ "indices" ][ "store" ][ "total_data_set_size_in_bytes" ] / resp[ "indices" ][ "docs" ][ "count" ]
-print ( "average doc size = " + str( avg_size ) )
+
+# before looking at the previous N days, let's inspect cat indices * for a doc count, and avg size
+#
+#logs-* first
+resp = es.cat.indices( index="*", format="json",bytes="b" )
+#`print( resp )
+temp_total_docs = 0
+temp_total_pri = 0
+new_avg_doc = 0
+for each_index in resp:
+  temp_total_docs+= int( each_index["docs.count"] )
+  temp_total_pri+= int( each_index["pri.store.size"] )
+new_avg_doc = temp_total_pri / temp_total_docs
+print( "total docs = ", temp_total_docs)
+print( "total pri size = ", temp_total_pri)
+print ( "avg doc size = ", new_avg_doc )
 while( last_n_days >= 1 ):
   date_n1_days_ago = datetime.now() - timedelta( days=(last_n_days+1) )
   date_n_days_ago = datetime.now() - timedelta( days=last_n_days )
   range_query = { 
     'range': {
-      'timestamp': { 
+      '@timestamp': { 
         'gte': date_n1_days_ago.strftime("%Y-%m-%dT00:00:00"), 
         'lte': date_n_days_ago.strftime("%Y-%m-%dT00:00:00")
       }
@@ -68,7 +87,7 @@ while( last_n_days >= 1 ):
   resp = es.search(index="*",query=doubleQuoteDict(range_query),params={"track_total_hits":"true"})
   #print( date_n_days_ago )
   print("%d docs " % resp['hits']['total']['value'])
-  gigs = (resp['hits']['total']['value'] * avg_size) / 1024 / 1024 / 1024
-  mb = (resp['hits']['total']['value'] * avg_size) / 1024 / 1024 
+  gigs = (resp['hits']['total']['value'] * new_avg_doc) / 1024 / 1024 / 1024
+  mb = (resp['hits']['total']['value'] * new_avg_doc) / 1024 / 1024 
   print("in gigs = " + str(gigs) + ", or in mb = " + str(mb) )
   last_n_days = last_n_days - 1
