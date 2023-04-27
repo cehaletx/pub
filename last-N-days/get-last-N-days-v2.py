@@ -1,7 +1,8 @@
 #!/usr/bin/python3
 #--------------------------------------------------------------------------------
-#  This is the  Version 2 of get-late-N-days, which will now look specifically
-# at 3 particular index patterns rather than the whole cluster.
+# This is the  Version 2 of get-late-N-days, which will now look specifically
+# at get cat indices now, and pri.store.size instead of cluster.stats
+# the next phase will also look at specific indices for Observability.
 # The benefit of looking at these specifics, logs-*, metrics-*, and apm-* is they
 # are the bulk of the data coming in for and observability cluster.
 #
