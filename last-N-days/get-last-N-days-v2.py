@@ -49,6 +49,7 @@ es = Elasticsearch(
 #    cloud_id="",
 #    basic_auth=("elastic", "")
     cloud_id="",
+    timeout=60,
     basic_auth=("elastic", "")
 )
 class doubleQuoteDict(dict):
@@ -66,8 +67,9 @@ temp_total_docs = 0
 temp_total_pri = 0
 new_avg_doc = 0
 for each_index in resp:
-  temp_total_docs+= int( each_index["docs.count"] )
-  temp_total_pri+= int( each_index["pri.store.size"] )
+  if( int( each_index["pri.store.size"] ) == 0 ):
+    temp_total_docs+= int( each_index["docs.count"] )
+    temp_total_pri+= int( each_index["pri.store.size"] )
 new_avg_doc = temp_total_pri / temp_total_docs
 print( "total docs = ", temp_total_docs)
 print( "total pri size = ", temp_total_pri)
