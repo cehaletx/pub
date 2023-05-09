@@ -27,7 +27,7 @@ warnings.filterwarnings("ignore")
 # integer which is number of days of ingest to calculate
 #--------------------------------------------------------------------------------
 #last_n_days = int( sys.argv[1] )
-last_n_days = int (3)
+last_n_days = int (7)
 #index_patterns=["logs-*","metrics-*","apm-*"]
 #--------------------------------------------------------------------------------
 # direct connect to elasticsearch host, can be a list
@@ -44,10 +44,9 @@ last_n_days = int (3)
 #)
 #--------------------------------------------------------------------------------
 # if you want to connect to cloud...
+# make sure to put your cloud id and user/pass
 #--------------------------------------------------------------------------------
 es = Elasticsearch(
-#    cloud_id="",
-#    basic_auth=("elastic", "")
     cloud_id="",
     timeout=60,
     basic_auth=("elastic", "")
