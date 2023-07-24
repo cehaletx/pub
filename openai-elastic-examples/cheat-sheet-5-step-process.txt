@@ -1,0 +1,71 @@
+# ==========================================================
+# Elastic Learned Sparse EncodeR testing
+# DevTools Content to prep your data for using the 
+# ELSER based queries against your data.
+# ==========================================================
+# this is written so you can modify it where you change
+# THIS_IS_YOUR_MAIN_TEXT_CONTENT_FIELDNAME, <indexname>, and <index-enriched>
+# and cut and paste this in DevTools and run it.
+# a couple of notes here. 
+# Step 1: First you ingest the text file, you’ll want a main field that has your text
+# as <indexname>
+# Step 2: Turn on the elser_model_1 in the kibana UI, this is two steps
+# [download model, then start]
+# Step 3: Create a new index which will contain the tokens by first putting
+# a "rank_features" field in the mapping
+# you need to make sure the ml.tokens fields are "rank_features"
+PUT <indexname-enriched>
+{
+  "mappings": {
+    "properties": {
+      "ml.tokens": {
+        "type": "rank_features"
+      },
+      "THIS_IS_YOUR_MAIN_TEXT_CONTENT_FIELDNAME": {
+        "type": "text"
+      },
+      "reference":{
+        "type": "text"
+      }
+    }
+  }
+}
+# Step 4: then you need a pipeline to enrich the docs with the ML tokens
+PUT _ingest/pipeline/elser-tokens-creation
+{
+  "processors": [
+    {
+      "inference": {
+        "model_id": ".elser_model_1",
+        "target_field": "ml",
+        "field_map": {
+          "THIS_IS_YOUR_MAIN_TEXT_CONTENT_FIELDNAME": “text_field”
+        },
+        "inference_config": {
+          "text_expansion": {
+            "results_field": "tokens"
+          }
+        }
+      }
+    }]
+}
+# check the creation
+GET _ingest/pipeline/elser-tokens-creation
+
+# Step 5: you will need to reindex the raw index ingested <indexname> using
+# the pipeline adding the tokenized fields to the newly created index <indexname-enriched>
+POST _reindex?wait_for_completion=false
+{
+  "source": {
+    "index": "<indexname>",
+    "size": 200
+  },
+  "dest": {
+    "index": "<indexname-enriched>",
+    "pipeline": "elser-tokens-creation"
+  }
+}
+# that reindex call will give you a task number, you can check the 
+# status of progress, this will take a while
+GET _tasks/<task_id>
+
