@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Search Results</title>
+</head>
+<body>
+    <h1>Search Results</h1>
+    <h2>BM25 Query: {{ query }}</h2>
+    <h3>Results:</h3>
+    <ul>
+        {% for hit in results.hits.hits %}
+        <li>Page {{ hit._source.page }}
+        {{ hit._source.paragraph }}</li>
+        {% endfor %}
+    </ul>
+    <h3>OpenAI Response:</h3>
+    <p>{{ response }}</p>
+    <h2>ELSER Query: {{ query }}</h2>
+    <h3>Results:</h3>
+    <ul>
+        {% for hit in results_e.hits.hits %}
+        <li>Page {{ hit._source.page }}
+        {{ hit._source.paragraph }}</li>
+        {% endfor %}
+    </ul>
+    <h3>OpenAI Response:</h3>
+    <p>{{ response_e }}</p>
+</body>
+</html>
