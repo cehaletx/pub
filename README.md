@@ -8,3 +8,10 @@ Note: This first version looks at the average doc size across the cluster, and t
 
 # - openai-elastic-examples
 a couple examples of datasets which can be uploaded to elasticsearch, with a python UI that will let you query elasticsearch and also pass contents to openAI for an example of Retrieval-Augmented Generation (RAG) 
+
+these scripts require elasticsearch, flask, os, and openai libraries.  use pip install for these
+
+pip install elasticsearch
+pip install flask 
+pip install os
+pip install openai
