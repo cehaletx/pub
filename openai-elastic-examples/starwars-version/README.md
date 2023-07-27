@@ -3,8 +3,8 @@ use the cheat sheet 5 step process to prep the data.
 
 For this particular data set, the 5 step process is already done for you in this dev tools ready
 snippet
-\# \n
-\# Step 1 - Ingest the json in starwars-txt sub directory using kibana “Upload a File” name the index \n
+\# \\n
+\# Step 1 - Ingest the json in starwars-txt sub directory using kibana “Upload a File” name the index \\n
 \# starwars-novel
 \#
 \# check your text uploaded
