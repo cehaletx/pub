@@ -23,9 +23,6 @@ PUT <indexname-enriched>
       },
       "THIS_IS_YOUR_MAIN_TEXT_CONTENT_FIELDNAME": {
         "type": "text"
-      },
-      "reference":{
-        "type": "text"
       }
     }
   }
