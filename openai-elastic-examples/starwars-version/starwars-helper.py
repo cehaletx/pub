@@ -35,7 +35,7 @@ def search():
     paragraphs = [hit['_source']['paragraph'] for hit in results['hits']['hits']]
 
     # Use the paragraph as context for OpenAI
-    response = generate_text(paragraphs)
+    response = generate_text(paragraphs,query)
 
     # perform the Elasticsearch ELSER query
     results_e = e_search_documents(query)
@@ -46,7 +46,7 @@ def search():
     paragraphs_e = [hit['_source']['paragraph'] for hit in results_e['hits']['hits']]
 
     # Use the verse as context for OpenAI
-    response_e = generate_text(paragraphs_e)
+    response_e = generate_text(paragraphs_e,query)
 
     return render_template('search.html', query=query, results=results, response=response, results_e=results_e, response_e=response_e)
 
@@ -79,12 +79,13 @@ def e_search_documents(query):
 
     return results
 
-def generate_text(paragraphs):
+def generate_text(paragraphs,query):
     # Join the paragraph into a single string
     context = ' '.join(paragraphs)
 
     # Define the OpenAI prompt and generate the response
-    prompt = "Given the following documents, please provide a response:\n" + context
+    #prompt = "Given the following documents, please provide a response:\n" + context
+    prompt = "Given the following documents, please provide a response: to this question \n" + query + " DOCS: " + context
     response = openai.Completion.create(
         engine='text-davinci-003',
         prompt=prompt,
