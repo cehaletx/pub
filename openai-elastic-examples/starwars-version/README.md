@@ -3,6 +3,7 @@ use the cheat sheet 5 step process to prep the data.
 
 For this particular data set, the 5 step process is already done for you in this dev tools ready
 snippet
+```
 # 
 # Step 1 - Ingest the json in starwars-txt sub directory using kibana “Upload a File” name the index 
 # starwars-novel
@@ -64,7 +65,9 @@ POST _reindex?wait_for_completion=false
 # capture the task id and you can watch progress with the following command, be patient, it takes a
 # little while.  look for "created" to equal your docs.
 GET _tasks/<task_id>
-# once that is completed you can start asking questions
+```
+once that is completed you can start asking questions like so
+```
 GET starwars-novel-enriched/_search
 {
    "query":{
@@ -77,3 +80,4 @@ GET starwars-novel-enriched/_search
    },
    "_source": ["paragraph"]
 }
+```
