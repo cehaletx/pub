@@ -52,14 +52,15 @@ def search():
 
 def search_documents(query):
     # Define the Elasticsearch search query
+    hparams = { "pre_tags": "<b><em>", "post_tags":"</b></em>","fields": {"paragraph" : {}}}
     search_query = {
-        "match": {
-            "paragraph": query
-        }
+      "match": {
+          "paragraph": query
+      }
     }
 
     # Execute the search query
-    results = es.search(index=ES_INDEX, query=search_query)
+    results = es.search(index=ES_INDEX, query=search_query, highlight=hparams)
 
     return results
 

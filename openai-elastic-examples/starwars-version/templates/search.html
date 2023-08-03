@@ -10,7 +10,7 @@
     <ul>
         {% for hit in results.hits.hits %}
         <li>Page {{ hit._source.page }}
-        {{ hit._source.paragraph }}</li>
+        {{ hit.highlight.paragraph|safe }}</li>
         {% endfor %}
     </ul>
     <h3>OpenAI Response:</h3>
