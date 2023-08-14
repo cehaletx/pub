@@ -15,3 +15,6 @@ pip install elasticsearch
 pip install flask 
 pip install os
 pip install openai
+
+# - msmarco4 is a new version modified by Jenny Morris, which adds options for using RRF in the queries
+The RRF option combines vector and bm25 results in elastic using RF, which is Reciporical Rank Fusion.
