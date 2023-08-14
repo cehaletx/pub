@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title class="title">MS MARCO Passage Ranking</title>
+    <link href="{{ url_for('static', filename='styles.css') }}" rel="stylesheet" type="text/css"/>
+</head>
+<body>
+<h1>Elser vs BM25 vs Hybrid Search</h1>
+<form action="/search" method="post">
+    <input type="text" size="80" name="query" placeholder="Enter your query" required>
+    <div>
+        <label>
+            <input type="checkbox" name="BM25" value="True">
+            BM25
+        </label>
+    </div>
+    <div>
+        <label>
+            <input type="checkbox" name="elser" value="True">
+            Elser
+        </label>
+    </div>
+    <div class="hybrid">
+        <label>
+            <input type="checkbox" name="hybrid" value="True">
+            Hybrid Search
+            <input class="boost" type="number" size="80" name="elser_boost" placeholder="Elser boost" min="1">
+            <input class="boost" type="number" size="80" name="BM25_boost" placeholder="BM25 boost" min="1">
+        </label>
+    </div>
+    <div>
+        <label>
+            <input type="checkbox" name="rrf" value="True">
+            RRF
+        </label>
+    </div>
+
+    <input type="submit" value="Get An Answer">
+    <h2>Dataset: MSMARCO PASSAGE RANkING</h2>
+
+</form>
+
+</body>
+</html>
+

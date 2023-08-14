@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Search Results</title>
+    <link href="{{ url_for('static', filename='search.css') }}" rel="stylesheet" type="text/css"/>
+</head>
+<body>
+<a href="/" class="back-button">&#8592; Back</a>
+<h1 style="text-align: center">Search Results</h1>
+<div class="results-container">
+    {%if results_bm25%}
+    <div>
+        <h2>BM25 Query: {{ query }}</h2>
+        <h3>Results:</h3>
+        <ul>
+            {% for hit in results_bm25.hits.hits %}
+            <li>{{ hit._source.page }}
+                {{ hit._source.text }}
+            </li>
+            {% endfor %}
+        </ul>
+        <h3 class="openai_resp">OpenAI Response:</h3>
+        <p>{{ response_bm25 }}</p>
+    </div>
+    {% endif %}
+    {%if results_elser%}
+    <div>
+        <h2>ELSER Query: {{ query }}</h2>
+        <h3>Results:</h3>
+        <ul>
+            {% for hit in results_elser.hits.hits %}
+            <li>{{ hit._source.page }}
+                {{ hit._source.text }}
+            </li>
+            {% endfor %}
+        </ul>
+        <div>
+            <h3 class="openai_resp">OpenAI Response:</h3>
+            <p>{{ response_elser }}</p>
+        </div>
+    </div>
+    {% endif %}
+    {%if results_hybrid%}
+    <div>
+        <h2>Hybrid Search Query: {{ query }}</h2>
+        <h3>Results:</h3>
+        <ul>
+            {% for hit in results_hybrid.hits.hits %}
+            <li>Page {{ hit._source.page }}
+                {{ hit._source.text }}
+            </li>
+            {% endfor %}
+        </ul>
+        <div>
+            <h3 class="openai_resp">OpenAI Response:</h3>
+            <p>{{ response_hybrid }}</p>
+        </div>
+    </div>
+    {% endif %}
+    {%if response_rff%}
+    <div>
+        <h2>RFF: {{ query }}</h2>
+        <h3>Results:</h3>
+        <ul>
+            {% for hit in results_rff.hits.hits %}
+            <li>{{ hit._source.page }}
+                {{ hit._source.text }}
+            </li>
+            {% endfor %}
+        </ul>
+        <div>
+            <h3 class="openai_resp">OpenAI Response:</h3>
+            <p>{{ response_rff }}</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+</body>
+</html>
