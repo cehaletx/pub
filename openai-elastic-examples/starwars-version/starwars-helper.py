@@ -52,7 +52,7 @@ def search():
 
 def search_documents(query):
     # Define the Elasticsearch search query
-    hparams = { "pre_tags": "<b><em>", "post_tags":"</b></em>","fields": {"paragraph" : {}}}
+    hparams = { "pre_tags": "<b><span style=\"color: red;\"><em>", "post_tags":"</b></span></em>","fields": {"paragraph" : {}}}
     search_query = {
       "match": {
           "paragraph": query
