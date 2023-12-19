@@ -18,3 +18,6 @@ pip install openai
 
 # - msmarco4 is a new version modified by Jenny Morris, which adds options for using RRF in the queries
 The RRF option combines vector and bm25 results in elastic using RF, which is Reciporical Rank Fusion.
+
+# ILM_example_dev_tools_code.txt
+added a txt file with some working DevTools example commands to showcase BASIC (pre Data stream) ILM Functionality
