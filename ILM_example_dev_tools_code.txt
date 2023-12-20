@@ -72,9 +72,9 @@ PUT _cluster/settings
 # ---- Step 3
 # we need to create an index template.  This sets 2 important
 # settings for ILM demo.
-# the Lifecycle Policy, which should match above
-# and the rollover_alias, which will need to match our first
-# write index, in later step.
+#  1) Lifecycle Policy, which should match above policy name
+#  2) rollover_alias, which will need to match our first
+# write index alias, in later step.
 PUT _template/my_example_template
 {
   "index_patterns": ["my-test-idx-*"],                 
@@ -88,7 +88,9 @@ PUT _template/my_example_template
 
 # ----------------------------------------------------------------
 # Make sure you create the index and alias before posting any docs
-# during this process on your own.
+# during this process on your own.  At the end of this page, there
+# are 2 examples of problems you could run into, which you would 
+# do at this point to see the errors if you wanted.
 # ----------------------------------------------------------------
 #
 # ---- Step 4  - now to do the initial bootstrap, you need to 
@@ -107,10 +109,27 @@ PUT my-test-idx-000001
     }
   }
 }
-# you can see this index 
+
+#
+# you can check this index was created and see the alias setup
+#
 GET my-test-idx-000001
+
+# 
 # the _ilm/explain should show the index is managed
+# 
 GET my-test-idx-000001/_ilm/explain
+#
+# let's post our first document, I have been setting the date
+# to the current date when testing.
+#
+# After looking at this there are several other documents to be 
+# posted, if you space them out about 1 minute each, you should
+# end up at a point where you can see several roll overs and
+# each residing in different data tiers.
+#
+# notice we are posting the documents to the write alias, not
+# the index directly.  
 POST my-test-idx/_doc/1
 {
   "@timestamp": "2023-12-19T11:07:11.000Z",
@@ -119,11 +138,16 @@ POST my-test-idx/_doc/1
   "event.category": "example-log"
 }
 
+# 
+# couple commands to see where we are at.  this is the exact
+# index, not the alias
+# 
 GET my-test-idx-000001/_ilm/explain
 GET my-test-idx-000001
-# ------
-# go ahead and post another doc, ilm won't kick over til you have 2
-# docs
+
+# 
+# go ahead and post another doc to continue the cycle
+# 
 POST my-test-idx/_doc/2
 {
   "@timestamp": "2023-12-19T11:07:12.000Z",
@@ -132,15 +156,12 @@ POST my-test-idx/_doc/2
   "event.category": "example-log"
 }
 GET my-test-idx-000001/_search
+# we can also look at the alias like an index
 GET my-test-idx
+# and query it
 GET my-test-idx/_search
-POST my-test-idx/_doc/2
-{
-  "@timestamp": "2023-12-19T11:07:12.000Z",
-  "host.name": "host1",
-  "message": "example message 2",
-  "event.category": "example-log"
-}
+
+#
 # wait about a minute then post another
 POST my-test-idx/_doc/3
 {
@@ -149,7 +170,8 @@ POST my-test-idx/_doc/3
   "message": "example message 3",
   "event.category": "example-log"
 }
-# one more minute post the last
+#
+# one more minute post 
 POST my-test-idx/_doc/4
 {
   "@timestamp": "2023-12-19T11:07:14.000Z",
@@ -187,6 +209,7 @@ POST my-test-idx-000001/_doc/1
   "message": "example message 1",
   "event.category": "example-log"
 }
+# review this explain a couple times, see what happened
 GET my-test-idx-000001/_ilm/explain
 # ---- Example cleanup step
 # if you did the test, go ahead and delete this INDEX 
@@ -204,9 +227,10 @@ POST my-test-idx/_doc/1
   "event.category": "example-log"
 }
 # if things were working properly, you should have an initial
-# index with the -000001 at the end, and we do not.
+# index with the -000001 at the end, and we do not, 
 GET my-test-idx-000001/_ilm/explain
-# it actually lives in my-test-
+# it actually lives in my-test-idx as a real index, because the
+# alias was not created first.
 GET my-test-idx/_ilm/explain
 # --- second example problem cleanup
 DELETE my-test-idx
