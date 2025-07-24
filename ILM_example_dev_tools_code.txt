@@ -1,0 +1,237 @@
+#===============================================================
+# - ILM setup for a custom index.  This is the old way, a more
+# efficient way to leverage ILM management is to utilize Data
+# streams.
+# ----
+# Before we get started, 
+# let's clean up in case we have run this before.
+DELETE my-test-idx
+DELETE my-test-idx-0000*
+DELETE _ilm/policy/my-demo-policy
+# ---- Step 1
+# Now, first step is to configure an ILM policy.  Notice a couple
+# thigs here.  1) all the phases are super short for DEMO purpose
+# 2) Delete phase is only 1 hour also, for demo purpose
+PUT _ilm/policy/my-demo-policy
+{
+  "policy": {
+    "phases": {
+      "hot": {
+        "actions": {
+          "rollover": {
+            "max_age": "1m"
+          },
+          "set_priority": {
+            "priority": 100
+          }
+        },
+        "min_age": "0ms"
+      },
+      "warm": {
+        "min_age": "0m",
+        "actions": {
+          "set_priority": {
+            "priority": 50
+          },
+          "allocate": {
+            "number_of_replicas": 1
+          }
+        }
+      },
+      "cold": {
+        "min_age": "2m",
+        "actions": {
+          "set_priority": {
+            "priority": 0
+          },
+          "allocate": {
+            "number_of_replicas": 0
+          }
+        }
+      },
+      "delete": {
+        "min_age": "60m",
+        "actions": {
+          "delete": {}
+        }
+      }
+    }
+  }
+}
+# ---- Step 2 [Only for test or Demo env]
+# next to make sure this all happens quickly we are shrinking 
+# the ILM poll cycle, FOR TESTING/DEMO ONLY, 
+# production default is fine.
+# The default is 10Min
+PUT _cluster/settings
+{
+  "persistent": {
+    "indices.lifecycle.poll_interval": "15s"
+  }
+}
+# ---- Step 3
+# we need to create an index template.  This sets 2 important
+# settings for ILM demo.
+#  1) Lifecycle Policy, which should match above policy name
+#  2) rollover_alias, which will need to match our first
+# write index alias, in later step.
+PUT _template/my_example_template
+{
+  "index_patterns": ["my-test-idx-*"],                 
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 1,
+    "index.lifecycle.name": "my-demo-policy",      
+    "index.lifecycle.rollover_alias": "my-test-idx"
+  }
+}
+
+# ----------------------------------------------------------------
+# Make sure you create the index and alias before posting any docs
+# during this process on your own.  At the end of this page, there
+# are 2 examples of problems you could run into, which you would 
+# do at this point to see the errors if you wanted.
+# ----------------------------------------------------------------
+#
+# ---- Step 4  - now to do the initial bootstrap, you need to 
+# create the index, with the write alias 
+#
+# Notice this index doesn't exist yet, we are creating it with this
+# step, AND setting the initial write Alias, which must match the 
+# "rollover_alias" in our Index Template, the name needs to match 
+# out index_template pattern we used above, and this new index will
+# inherit all the settings applied in Step 3
+PUT my-test-idx-000001
+{
+  "aliases": {
+    "my-test-idx": {
+      "is_write_index": true
+    }
+  }
+}
+
+#
+# you can check this index was created and see the alias setup
+#
+GET my-test-idx-000001
+
+# 
+# the _ilm/explain should show the index is managed
+# 
+GET my-test-idx-000001/_ilm/explain
+#
+# let's post our first document, I have been setting the date
+# to the current date when testing.
+#
+# After looking at this there are several other documents to be 
+# posted, if you space them out about 1 minute each, you should
+# end up at a point where you can see several roll overs and
+# each residing in different data tiers.
+#
+# notice we are posting the documents to the write alias, not
+# the index directly.  
+POST my-test-idx/_doc/1
+{
+  "@timestamp": "2023-12-19T11:07:11.000Z",
+  "host.name": "host1",
+  "message": "example message 1",
+  "event.category": "example-log"
+}
+
+# 
+# couple commands to see where we are at.  this is the exact
+# index, not the alias
+# 
+GET my-test-idx-000001/_ilm/explain
+GET my-test-idx-000001
+
+# 
+# go ahead and post another doc to continue the cycle
+# 
+POST my-test-idx/_doc/2
+{
+  "@timestamp": "2023-12-19T11:07:12.000Z",
+  "host.name": "host1",
+  "message": "example message 2",
+  "event.category": "example-log"
+}
+GET my-test-idx-000001/_search
+# we can also look at the alias like an index
+GET my-test-idx
+# and query it
+GET my-test-idx/_search
+
+#
+# wait about a minute then post another
+POST my-test-idx/_doc/3
+{
+  "@timestamp": "2023-12-19T11:07:13.000Z",
+  "host.name": "host1",
+  "message": "example message 3",
+  "event.category": "example-log"
+}
+#
+# one more minute post 
+POST my-test-idx/_doc/4
+{
+  "@timestamp": "2023-12-19T11:07:14.000Z",
+  "host.name": "host1",
+  "message": "example message 4",
+  "event.category": "example-log"
+}
+POST my-test-idx/_doc/5
+{
+  "@timestamp": "2023-12-19T11:07:15.000Z",
+  "host.name": "host1",
+  "message": "example message 5",
+  "event.category": "example-log"
+}
+GET my-test-idx-000001/_ilm/explain
+GET my-test-idx-000002/_ilm/explain
+GET my-test-idx-000003/_ilm/explain
+GET my-test-idx-00000*/_ilm/explain
+# if you only have 1 doc in last index, which is hot, it'll just
+# sit there, until the next comes in
+GET my-test-idx/_search
+
+
+
+#==== These are problems you can test after step 3 ==========
+# ---- Example problem if you do not have the write
+# alias setup, in Step 4, it will cause an error in ILM phase
+# if you wait 60 seconds, and do the ILM explain.
+# If you are not interested in seeing the error you can skip this 
+# if you don't care to see the issue
+POST my-test-idx-000001/_doc/1
+{
+  "@timestamp": "2023-12-07T11:07:11.000Z",
+  "host.name": "host1",
+  "message": "example message 1",
+  "event.category": "example-log"
+}
+# review this explain a couple times, see what happened
+GET my-test-idx-000001/_ilm/explain
+# ---- Example cleanup step
+# if you did the test, go ahead and delete this INDEX 
+# for the true next step
+DELETE my-test-idx-0000*
+# EXAMPLE PROBLEM one more problem you will run into, 
+# is you want to write to the alias before you have not added it 
+# to an index, it will literally
+# create an index, you can try that here too.
+POST my-test-idx/_doc/1
+{
+  "@timestamp": "2023-12-07T11:07:11.000Z",
+  "host.name": "host1",
+  "message": "example message 1",
+  "event.category": "example-log"
+}
+# if things were working properly, you should have an initial
+# index with the -000001 at the end, and we do not, 
+GET my-test-idx-000001/_ilm/explain
+# it actually lives in my-test-idx as a real index, because the
+# alias was not created first.
+GET my-test-idx/_ilm/explain
+# --- second example problem cleanup
+DELETE my-test-idx
+#================================================================
